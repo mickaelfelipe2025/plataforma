@@ -1,1 +1,39 @@
-
+{
+  "courses": [
+    {
+      "id": "onboarding-office-net",
+      "title": "Onboarding Office Net (Boas-vindas)",
+      "description": "Introdução rápida: cultura, atendimento, padrão de comunicação e rotina.",
+      "category": "Cursos Internos",
+      "level": "Básico",
+      "tags": ["atendimento", "processos", "padrão"],
+      "lessons": [
+        { "id": "aula-01", "title": "Boas-vindas e visão geral", "videoId": "dQw4w9WgXcQ" },
+        { "id": "aula-02", "title": "Padrão de atendimento (WhatsApp)", "videoId": "dQw4w9WgXcQ" }
+      ]
+    },
+    {
+      "id": "sistemas-crm",
+      "title": "Sistema/CRM: Operação básica",
+      "description": "Como registrar atendimento, abrir ordem e acompanhar status.",
+      "category": "Tutoriais de Sistemas",
+      "level": "Intermediário",
+      "tags": ["crm", "ordem", "rotina"],
+      "lessons": [
+        { "id": "aula-01", "title": "Entrando e navegando no sistema", "videoId": "dQw4w9WgXcQ" },
+        { "id": "aula-02", "title": "Abrindo e encerrando atendimento", "videoId": "dQw4w9WgXcQ" }
+      ]
+    },
+    {
+      "id": "clientes-wifi",
+      "title": "Tutoriais para clientes: Wi-Fi e cobertura",
+      "description": "Explicações simples para o cliente e passos para resolver rápido.",
+      "category": "Tutoriais para Clientes",
+      "level": "Básico",
+      "tags": ["wifi", "suporte", "roteador"],
+      "lessons": [
+        { "id": "aula-01", "title": "Como orientar sobre redes 2.4G/5G", "videoId": "dQw4w9WgXcQ" }
+      ]
+    }
+  ]
+}
