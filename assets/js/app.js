@@ -4,17 +4,21 @@ const App = (() => {
 
   let DATA = { courses: [] };
 
-  btnReset.addEventListener("click", () => {
-    const ok = confirm("Tem certeza que deseja limpar o progresso salvo neste navegador?");
-    if (!ok) return;
-    Storage.reset();
-    route();
-  });
+  // Evita erro caso o botão não exista no HTML
+  if (btnReset) {
+    btnReset.addEventListener("click", () => {
+      const ok = confirm("Tem certeza que deseja limpar o progresso salvo neste navegador?");
+      if (!ok) return;
+      Storage.reset();
+      route();
+    });
+  }
 
   async function loadData() {
     const res = await fetch("./data/courses.json", { cache: "no-store" });
     if (!res.ok) throw new Error("Falha ao carregar courses.json");
     DATA = await res.json();
+    if (!DATA || !Array.isArray(DATA.courses)) DATA = { courses: [] };
   }
 
   function setActiveNav(key) {
@@ -24,7 +28,7 @@ const App = (() => {
   }
 
   function escapeHtml(s) {
-    return String(s)
+    return String(s ?? "")
       .replaceAll("&","&amp;")
       .replaceAll("<","&lt;")
       .replaceAll(">","&gt;")
@@ -41,13 +45,31 @@ const App = (() => {
     return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?rel=0&modestbranding=1`;
   }
 
+  function getYoutubeThumb(videoId) {
+    return `https://img.youtube.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`;
+  }
+
+  // Resolve a capa do curso:
+  // 1) course.cover (imagem custom)
+  // 2) thumb do youtube da 1ª aula (fallback)
+  function getCourseCover(course) {
+    if (course?.cover) return course.cover;
+
+    const firstVideoId = course?.lessons?.[0]?.videoId;
+    if (firstVideoId) return getYoutubeThumb(firstVideoId);
+
+    return "";
+  }
+
   function calcStats() {
     const totalCourses = DATA.courses.length;
     let totalLessons = 0;
     let completedLessons = 0;
 
     for (const c of DATA.courses) {
-      totalLessons += c.lessons.length;
+      const lessonsCount = Array.isArray(c.lessons) ? c.lessons.length : 0;
+      totalLessons += lessonsCount;
+
       const prog = Storage.getCourse(c.id);
       completedLessons += (prog.completedLessons || []).length;
     }
@@ -117,7 +139,7 @@ const App = (() => {
   function renderCourseCard(course) {
     const prog = Storage.getCourse(course.id);
     const done = (prog.completedLessons || []).length;
-    const total = course.lessons.length;
+    const total = Array.isArray(course.lessons) ? course.lessons.length : 0;
     const percent = pct(done, total);
 
     const levelBadge =
@@ -125,8 +147,32 @@ const App = (() => {
       course.level === "Intermediário" ? "badge badge--gold" :
       "badge";
 
+    const cover = getCourseCover(course);
+
     return `
       <article class="card">
+        ${
+          cover ? `
+          <div style="
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(31,45,31,.10);
+            background: rgba(255,255,255,.60);
+            margin-bottom: 12px;
+            height: 150px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+          ">
+            <img
+              src="${escapeHtml(cover)}"
+              alt="Capa do curso ${escapeHtml(course.title)}"
+              style="width:100%; height:100%; object-fit:cover; display:block;"
+              loading="lazy"
+            />
+          </div>` : ""
+        }
+
         <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
           <div>
             <h3 style="margin:0; font-size:15px;">${escapeHtml(course.title)}</h3>
@@ -162,7 +208,9 @@ const App = (() => {
     setActiveNav("catalogo");
 
     const url = new URL(location.href);
-    const catFromUrl = url.hash.includes("?") ? new URLSearchParams(url.hash.split("?")[1]).get("cat") : "";
+    const catFromUrl = url.hash.includes("?")
+      ? new URLSearchParams(url.hash.split("?")[1]).get("cat")
+      : "";
 
     appEl.innerHTML = `
       <div class="section">
@@ -245,13 +293,29 @@ const App = (() => {
 
     const prog = Storage.getCourse(course.id);
     const completed = new Set(prog.completedLessons || []);
-    const total = course.lessons.length;
+    const total = Array.isArray(course.lessons) ? course.lessons.length : 0;
     const done = completed.size;
     const percent = pct(done, total);
 
-    const firstLesson = course.lessons[0];
-    const selectedLessonId = (location.hash.split("?lesson=")[1] || firstLesson?.id || "");
-    const selectedLesson = course.lessons.find(l => l.id === selectedLessonId) || firstLesson;
+    const firstLesson = course.lessons?.[0];
+    const hash = location.hash || "";
+    const qs = hash.includes("?") ? hash.split("?")[1] : "";
+    const params = new URLSearchParams(qs);
+    const selectedLessonId = params.get("lesson") || firstLesson?.id || "";
+    const selectedLesson = course.lessons?.find(l => l.id === selectedLessonId) || firstLesson;
+
+    if (!selectedLesson) {
+      appEl.innerHTML = `
+        <div class="card">
+          <h2 style="margin:0 0 6px;">Curso sem aulas</h2>
+          <p class="p">Adicione aulas em <strong>courses.json</strong> para este curso.</p>
+          <div class="actions"><a class="btn btn--primary" href="#/catalogo">Voltar ao catálogo</a></div>
+        </div>
+      `;
+      return;
+    }
+
+    const cover = getCourseCover(course);
 
     appEl.innerHTML = `
       <div class="section">
@@ -260,6 +324,25 @@ const App = (() => {
       </div>
 
       <div class="card">
+        ${
+          cover ? `
+          <div style="
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(31,45,31,.10);
+            background: rgba(255,255,255,.60);
+            margin-bottom: 12px;
+            height: 180px;
+          ">
+            <img
+              src="${escapeHtml(cover)}"
+              alt="Capa do curso ${escapeHtml(course.title)}"
+              style="width:100%; height:100%; object-fit:cover; display:block;"
+              loading="lazy"
+            />
+          </div>` : ""
+        }
+
         <p class="p">${escapeHtml(course.description || "")}</p>
 
         <div style="margin-top:12px;">
@@ -293,7 +376,7 @@ const App = (() => {
       </div>
 
       <div>
-        ${course.lessons.map((l, idx) => {
+        ${(course.lessons || []).map((l, idx) => {
           const isDone = completed.has(l.id);
           const isActive = l.id === selectedLesson.id;
           return `
@@ -318,7 +401,7 @@ const App = (() => {
       btn.addEventListener("click", () => {
         const lessonId = btn.getAttribute("data-complete");
         Storage.setLessonCompleted(course.id, lessonId);
-        route(); // re-render
+        route();
       });
     });
   }
@@ -336,17 +419,8 @@ const App = (() => {
         <p class="p">
           Abra <strong>plataforma/data/courses.json</strong> e adicione um novo item em <strong>courses</strong>.
           Cada aula precisa de um <strong>videoId</strong> do YouTube.
-        </p>
-        <div class="badges">
-          <span class="badge badge--green">Dica</span>
-          <span class="badge">Use IDs curtos e únicos</span>
-          <span class="badge">Aulas de 5–12 min</span>
-        </div>
-
-        <h3 style="margin:16px 0 8px;">Limites (sem servidor)</h3>
-        <p class="p">
-          O progresso fica salvo apenas neste navegador/dispositivo. Se você precisar de login, ranking, trilhas por usuário
-          e certificado, aí sim entra backend (ou Google Sheets como “quase-backend”).
+          <br><br>
+          Para capa do curso, adicione no curso: <strong>"cover": "assets/covers/hbo_max-removebg-preview.png"</strong>
         </p>
       </div>
     `;
