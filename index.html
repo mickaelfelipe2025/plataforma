@@ -1,1 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Office Net | Treinamentos Internos</title>
+  <meta name="description" content="Plataforma interna de cursos e treinamentos - Office Net" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css" />
+</head>
 
+<body>
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <a class="brand" href="#/">
+        <span class="brand__dot" aria-hidden="true"></span>
+        <div class="brand__text">
+          <strong>Office Net</strong>
+          <small>Treinamentos Internos</small>
+        </div>
+      </a>
+
+      <nav class="nav">
+        <a href="#/" class="nav__link" data-nav="home">Início</a>
+        <a href="#/catalogo" class="nav__link" data-nav="catalogo">Catálogo</a>
+        <a href="#/ajuda" class="nav__link" data-nav="ajuda">Ajuda</a>
+      </nav>
+
+      <div class="topbar__actions">
+        <button id="btnResetProgress" class="btn btn--ghost" title="Limpar progresso deste navegador">
+          Limpar progresso
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main">
+    <div id="app"></div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <span>© <span id="year"></span> Office Net • Plataforma interna</span>
+      <span class="footer__hint">Sem servidor • Vídeos no YouTube • Progresso salvo no navegador</span>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+  <script src="./assets/js/storage.js"></script>
+  <script src="./assets/js/app.js"></script>
+</body>
+</html>
